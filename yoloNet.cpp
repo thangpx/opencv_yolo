@@ -1,9 +1,13 @@
 
 #include "yoloNet.hpp"
 
+using namespace cv;
+using namespace dnn;
+
 yoloNet::yoloNet(const String weightsPath, const String configPath, const String classesPath, 
             const int width, const int height, const float confidence)
 {
+    
     this->confidenceThreshold = confidence;
     this->width = width;
     this->height = height;
@@ -11,7 +15,8 @@ yoloNet::yoloNet(const String weightsPath, const String configPath, const String
     // load class names
     std::ifstream classes_ifs(classesPath.c_str());
     CV_Assert(classes_ifs.is_open());
-    String line;
+    std::string line;
+
     while (std::getline(classes_ifs, line))
     {
         this->classes.push_back(line);
@@ -69,17 +74,17 @@ void yoloNet::runOnFrame(Mat img) {
     }
     // remove the bounding boxes indicate the same object using NMS
     std::vector<int> indices;
-    NMSBoxes(boundingBoxes, confidences, this->confidenceThreshold, 0.4, indices);
+    NMSBoxes(boundingBoxes, confidences, this->confidenceThreshold, 0.3, indices);
     // save bounding boxes
     this->objects.resize(indices.size());
     for(int i = 0; i < indices.size(); i++) {
         int idx = indices[i];
         CV_Assert(classIds[idx] < this->classes.size());
-        yoloObject_t object = {
-            .boundingBox = boundingBoxes[idx],
-            .classId = this->classes[classIds[idx]],
-            .confidence = confidences[idx]
-        };
+		yoloObject_t object;
+		object.boundingBox = boundingBoxes[idx];
+		object.classId = this->classes[classIds[idx]];
+		object.confidence = confidences[idx];
+        
         this->objects[i] = object;
     }
 }
